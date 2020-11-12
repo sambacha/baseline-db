@@ -1,45 +1,35 @@
 {
-  "name": "deployer",
+  "name": "@baseline-protocol/merkledb",
   "version": "1.0.0",
-  "description": "Deploys an example merkle-tree contract",
-  "main": "index.js",
+  "main": "src/index.js",
+  "repository": "https://github.com/sambacha/baseline-db.git",
+  "author": "SEE CONTRIBUTORS",
+  "license": "CC-0",
   "scripts": {
-    "start": "nodemon --exec babel-node ./src/index.js",
-    "test": "mocha --exit --require @babel/register 'test/*test.js'"
-  },
-  "author": "iAmMichaelConnor",
-  "license": "CC0-1.0",
-  "contributors": [
-    "Michael Connor <Michael.Connor@uk.ey.com>"
-  ],
-  "dependencies": {
-    "@alch/alchemy-web3": "^0.1.17",
-    "abi2solidity": "^0.1.2",
-    "big-integer": "^1.6.47",
-    "body-parser": "^1.19.0",
-    "config": "^3.2.2",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "json-schema-to-typescript": "^9.1.1",
-    "jsonfile": "^5.0.0",
-    "level": "^5.0.1",
-    "request": "^2.88.0",
-    "web3": "1.2.1"
+    "compile": "yarn truffle compile && yarn typechain --target truffle './build/**/*.json'",
+    "coverage": "yarn compile && yarn truffle run coverage",
+    "test": "yarn compile && yarn truffle test",
+    "deploy": "truffle migrate --skipDryRun --network $NETWORK",
+    "verify": "truffle run verify --network $NETWORK"
   },
   "devDependencies": {
-    "@babel/cli": "^7.6.4",
-    "@babel/core": "^7.6.4",
-    "@babel/node": "^7.6.3",
-    "@babel/preset-env": "^7.6.3",
-    "@babel/register": "^7.6.2",
-    "@truffle/artifactor": "^4.0.85",
-    "@types/node": "13.5.0",
-    "@zoltu/solidity-typescript-generator": "^4.0.3",
-    "mocha": "^6.2.2",
-    "nodemon": "^1.19.4",
-    "truffle": "^5.1.52",
-    "truffle-abi": "^1.0.3",
-    "ts-node": "8.6.2",
-    "typescript": "3.7.5"
-  }
+    "bn.js": "^5.1.2",
+    "chai": "^4.2.0",
+    "chai-bn": "^0.2.1",
+    "prettier": "^2.0.5",
+    "prettier-plugin-solidity": "^1.0.0-alpha.54",
+    "solhint-plugin-prettier": "^0.0.4",
+    "solidity-coverage": "^0.7.7",
+    "truffle": "^5.1.29",
+    "truffle-flattener": "^1.4.4",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "truffle-plugin-verify": "^0.3.11",
+    "truffle-typings": "^1.0.8",
+    "ts-node": "^8.10.2",
+    "tslint": "^6.1.2",
+    "typechain": "^2.0.0",
+    "typechain-target-truffle": "^1.0.2",
+    "typescript": "^3.9.5"
+  },
+  "dependencies": {}
 }

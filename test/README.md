@@ -7,9 +7,9 @@ cd path/to/deployer
 truffle compile --all
 ```
 
-## To run a specific test:  
+## To run a specific test:
 
-_Note: in the steps below, you can replace `-f docker-compose.remote.pull.yml` with one of the other provided docker-compose files, such as `-f docker-compose.remote.push.yml`._  
+_Note: in the steps below, you can replace `-f docker-compose.remote.pull.yml` with one of the other provided docker-compose files, such as `-f docker-compose.remote.push.yml`._
 
 _Note, however, that the default `docker-compose.yml` file is a bit more fiddly, because it relies on contracts being deployed via truffle with your application. Tests aren't provided for that file yet._
 
@@ -21,19 +21,19 @@ truffle compile
 cd ..
 ```
 
-#### MerkleTreeController.test.js  
+#### MerkleTreeController.test.js
 
-This test relies on the deployer microservice's url '<http://deployer:80>' being discoverable by itself. We achieve this easily by running the 'main' docker-compose script first:  
+This test relies on the deployer microservice's url '<http://deployer:80>' being discoverable by itself. We achieve this easily by running the 'main' docker-compose script first:
 
 In one terminal window:  
-`docker-compose up`  
+`docker-compose up`
 
 Then in another terminal window:  
 `docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/MerkleTreeController.test.js'`
 
 This test works for any hash or curve type.
 
-#### MultipleMerkleTreesController.test.js  
+#### MultipleMerkleTreesController.test.js
 
 `docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/MultipleMerkleTreesController.test.js'`
 
@@ -41,7 +41,7 @@ This test demonstrates using multiple merkle trees per smart contract. Be sure t
 
 This test only works for hashing with SHA.
 
-#### deployment.test.js  
+#### deployment.test.js
 
 `docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/deployment.test.js'`
 
