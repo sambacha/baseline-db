@@ -1,0 +1,17 @@
+{
+  "name": "baseline-db-api-spec",
+  "version": "1.0.0",
+  "description": "",
+  "main": "swagger.yml",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sambacha/baseline-db.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "CC-0",
+  "bugs": {
+    "url": "https://github.com/sambacha/baseline-db/issues"
+  },
+  "homepage": "https://github.com/sambacha/baseline-db#readme"
+}
