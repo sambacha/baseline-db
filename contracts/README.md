@@ -1,4 +1,4 @@
-# Example Contracts
+# MerkleDB
 
 These contracts are provided to demonstrate deploying the merkle-tree contracts from this **external** (or 'remote') microservice.
 
@@ -20,7 +20,7 @@ The contracts will then be deployed when this microservice is started with:
 
 Here's an explanation of the hashing function used in the MerkleTree.sol contract:
 
-```
+```assembly
 assembly {
     /*
       * gasLimit: calling with gas equal to not(0), as we have here, will send all available gas to the function being called. This removes the need to guess or upper-bound the amount of gas being sent yourself. As an alternative, we could have guessed the gas needed with: sub(gas, 2000)
@@ -36,3 +36,5 @@ assembly {
     switch success case 0 { invalid() }
 }
 ```
+
+
