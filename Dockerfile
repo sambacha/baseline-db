@@ -1,10 +1,15 @@
-FROM node:11.15
+FROM node:12.20-buster-slim
 
 RUN mkdir /app
 WORKDIR /app
 
-COPY ./package.json ./package-lock.json ./
-RUN npm ci
+# Install app dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Bundle app source
+COPY . .
 
 EXPOSE 80
-CMD npm start
+
+CMD [ "npm", "start" ]
