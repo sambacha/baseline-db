@@ -20,7 +20,7 @@
     "prettier-plugin-solidity": "1.0.0-beta.5",
     "solhint-plugin-prettier": "0.0.5",
     "solidity-coverage": "0.7.15",
-    "truffle": "5.1.63",
+    "truffle": "5.1.67",
     "truffle-flattener": "1.5.0",
     "truffle-hdwallet-provider": "1.0.17",
     "truffle-plugin-verify": "0.5.4",
