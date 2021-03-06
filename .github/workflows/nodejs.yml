@@ -1,4 +1,4 @@
- # GitHub Nodejs CI
+# GitHub Nodejs CI
 name: nodejs
 
 on: ['push']

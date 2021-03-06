@@ -3,7 +3,7 @@
  *
  * @param {Any} val
  */
-const isString = (val) => typeof val === "string";
+const isString = (val) => typeof val === 'string';
 
 /**
  * Returns a hash of string.
@@ -46,15 +46,14 @@ const setIn = (obj, arr) => {
  *
  * @param {String} str
  */
-const lines = (str) => str.split("\n").filter((l) => l !== "");
+const lines = (str) => str.split('\n').filter((l) => l !== '');
 
 /**
  * Returns a flattened version of arr.
  *
  * @param {Array} arr
  */
-const flatten = (arr) =>
-  [].concat(...arr.map((v) => (Array.isArray(v) ? flatten(v) : v)));
+const flatten = (arr) => [].concat(...arr.map((v) => (Array.isArray(v) ? flatten(v) : v)));
 
 /**
  * Returns the unique elements in arr.

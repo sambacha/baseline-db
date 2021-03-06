@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const chalk = require("chalk");
+const chalk = require('chalk');
 
-const Core = require("./src/Core");
+const Core = require('./src/Core');
 
 /**
  * Takes the process.argv object passed when enkelgit.js
@@ -16,7 +16,7 @@ const parseOptions = (argv) => {
   return argv.reduce(
     (opts, arg) => {
       if (arg.match(/^-/)) {
-        name = arg.replace(/^-+/, "");
+        name = arg.replace(/^-+/, '');
         opts[name] = true;
       } else if (name !== undefined) {
         opts[name] = arg;
@@ -27,7 +27,7 @@ const parseOptions = (argv) => {
 
       return opts;
     },
-    { _: [] }
+    { _: [] },
   );
 };
 
@@ -42,15 +42,13 @@ const runCli = (module.exports.runCli = (argv) => {
   let commandName = opts._[2];
 
   if (commandName === undefined) {
-    throw new Error(chalk.red("you must specify a Enkelgit command to run"));
+    throw new Error(chalk.red('you must specify a Enkelgit command to run'));
   } else {
-    let commandFnName = commandName.replace(/-/g, "_");
+    let commandFnName = commandName.replace(/-/g, '_');
     let fn = Core[commandFnName];
 
     if (fn === undefined) {
-      throw new Error(
-        chalk.red("'" + commandFnName + "' is not a Enkelgit command")
-      );
+      throw new Error(chalk.red("'" + commandFnName + "' is not a Enkelgit command"));
     } else {
       let commandArgs = opts._.slice(3);
       while (commandArgs.length < fn.length - 1) {

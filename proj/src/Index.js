@@ -1,8 +1,8 @@
-const fs = require("fs");
+const fs = require('fs');
 
-const Objects = require("./Objects");
-const Files = require("./Files");
-const Utils = require("./Utils");
+const Objects = require('./Objects');
+const Files = require('./Files');
+const Utils = require('./Utils');
 
 /**
  * Returns true if there is an entry for path in the index stage.
@@ -16,14 +16,15 @@ const hasFile = (path, stage) => read()[key(path, stage)] !== undefined;
  * Returns the index as a JS object.
  */
 const read = () => {
-  const indexFilePath = Files.enkelgitPath("index");
-  return Utils.lines(
-    fs.existsSync(indexFilePath) ? Files.read(indexFilePath) : "\n"
-  ).reduce((idx, blobStr) => {
-    let blobData = blobStr.split(/ /);
-    idx[key(blobData[0], blobData[1])] = blobData[2];
-    return idx;
-  }, {});
+  const indexFilePath = Files.enkelgitPath('index');
+  return Utils.lines(fs.existsSync(indexFilePath) ? Files.read(indexFilePath) : '\n').reduce(
+    (idx, blobStr) => {
+      let blobData = blobStr.split(/ /);
+      idx[key(blobData[0], blobData[1])] = blobData[2];
+      return idx;
+    },
+    {},
+  );
 };
 
 /**
@@ -32,7 +33,7 @@ const read = () => {
  * @param {String} path
  * @param {String} stage
  */
-const key = (path, stage) => path + "," + stage;
+const key = (path, stage) => path + ',' + stage;
 
 /**
  * Returns a JS object that contains the path and stage of ‘key`.
@@ -51,10 +52,7 @@ const keyPieces = (key) => {
  */
 const toc = () => {
   const idx = read();
-  return Object.keys(idx).reduce(
-    (obj, k) => Utils.setIn(obj, [k.split(",")[0], idx[k]]),
-    {}
-  );
+  return Object.keys(idx).reduce((obj, k) => Utils.setIn(obj, [k.split(',')[0], idx[k]]), {});
 };
 
 /**
@@ -154,9 +152,9 @@ const _writeStageEntry = (path, stage, content) => {
 const write = (index) => {
   let indexStr =
     Object.keys(index)
-      .map((k) => k.split(",")[0] + " " + k.split(",")[1] + " " + index[k])
-      .join("\n") + "\n";
-  Files.write(Files.enkelgitPath("index"), indexStr);
+      .map((k) => k.split(',')[0] + ' ' + k.split(',')[1] + ' ' + index[k])
+      .join('\n') + '\n';
+  Files.write(Files.enkelgitPath('index'), indexStr);
 };
 
 /**
@@ -165,7 +163,7 @@ const write = (index) => {
  */
 const workingCopyToc = () => {
   return Object.keys(read())
-    .map((k) => k.split(",")[0])
+    .map((k) => k.split(',')[0])
     .filter((p) => fs.existsSync(Files.workingCopyPath(p)))
     .reduce((idx, p) => {
       idx[p] = Utils.hash(Files.read(Files.workingCopyPath(p)));
@@ -182,10 +180,7 @@ const workingCopyToc = () => {
  * @param {Object} toc
  */
 const tocToIndex = (toc) => {
-  return Object.keys(toc).reduce(
-    (idx, p) => Utils.setIn(idx, [key(p, 0), toc[p]]),
-    {}
-  );
+  return Object.keys(toc).reduce((idx, p) => Utils.setIn(idx, [key(p, 0), toc[p]]), {});
 };
 
 /**
@@ -196,9 +191,7 @@ const tocToIndex = (toc) => {
  */
 const matchingFiles = (pathSpec) => {
   const searchPath = Files.pathFromRepoRoot(pathSpec);
-  return Object.keys(toc()).filter((p) =>
-    p.match("^" + searchPath.replace(/\\/g, "\\\\"))
-  );
+  return Object.keys(toc()).filter((p) => p.match('^' + searchPath.replace(/\\/g, '\\\\')));
 };
 
 module.exports = {

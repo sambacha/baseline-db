@@ -10,7 +10,6 @@ pragma solidity ^0.5.8;
 import "./MiMC_BLS12_377.sol"; // import contract with MiMC function
 
 contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
-
     /*
     @notice Explanation of the Merkle Tree in this contract:
     This is an append-only merkle tree; populated from left to right.
@@ -44,14 +43,14 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
     /**
     These events are what the merkle-tree microservice's filters will listen for.
     */
-    event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
-    event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
+    event NewLeaf(uint256 leafIndex, bytes32 leafValue, bytes32 root);
+    event NewLeaves(uint256 minLeafIndex, bytes32[] leafValues, bytes32 root);
 
     //event Output(bytes32[2] input, bytes32[1] output, uint nodeIndex, uint256 leafCount); // for debugging only
 
-    uint constant public treeHeight = 32; //change back to 32 after testing
-    uint public constant treeWidth = 2 ** treeHeight; // 2 ** treeHeight
-    uint public leafCount; // the number of leaves currently in the tree
+    uint256 public constant treeHeight = 32; //change back to 32 after testing
+    uint256 public constant treeWidth = 2**treeHeight; // 2 ** treeHeight
+    uint256 public leafCount; // the number of leaves currently in the tree
 
     /**
     Whilst ordinarily, we'd work solely with bytes32, we need to truncate nodeValues up the tree. Therefore, we need to declare certain variables with lower byte-lengths:
@@ -65,21 +64,21 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
 
     // NOTE - may have to change mimcHash to mimcHash2 when using ALT_BN128
     // bytes32 constant zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    uint zero = 0;
-    uint[33] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added. use bytes32 with ALT_BN128
+    uint256 zero = 0;
+    uint256[33] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added. use bytes32 with ALT_BN128
 
     /**
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
     @return uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
     */
-    function getFrontierSlot(uint leafIndex) public pure returns (uint slot) {
+    function getFrontierSlot(uint256 leafIndex) public pure returns (uint256 slot) {
         slot = 0;
-        if ( leafIndex % 2 == 1 ) {
-            uint exp1 = 1;
-            uint pow1 = 2;
-            uint pow2 = pow1 << 1;
+        if (leafIndex % 2 == 1) {
+            uint256 exp1 = 1;
+            uint256 pow1 = 2;
+            uint256 pow2 = pow1 << 1;
             while (slot == 0) {
-                if ( (leafIndex + 1 - pow1) % pow2 == 0 ) {
+                if ((leafIndex + 1 - pow1) % pow2 == 0) {
                     slot = exp1;
                 } else {
                     pow1 = pow2;
@@ -96,19 +95,17 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
     @return bytes32 - the root of the merkle tree, after the insert.
     */
     function insertLeaf(bytes32 leafValue) public returns (bytes32 root) {
-
         // check that space exists in the tree:
         require(treeWidth > leafCount, "There is no space left in the tree.");
 
-        uint slot = getFrontierSlot(leafCount);
-        uint nodeIndex = leafCount + treeWidth - 1;
-        uint nodeValue = uint(leafValue); // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
+        uint256 slot = getFrontierSlot(leafCount);
+        uint256 nodeIndex = leafCount + treeWidth - 1;
+        uint256 nodeValue = uint256(leafValue); // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
 
-        uint[] memory input = new uint[](2); //input of the hash fuction
+        uint256[] memory input = new uint256[](2); //input of the hash fuction
         //bytes32[2] memory input; //input of the hash fuction - use this with ALT_BN128
 
-        for (uint level = 0; level < treeHeight; level++) {
-
+        for (uint256 level = 0; level < treeHeight; level++) {
             if (level == slot) frontier[slot] = nodeValue;
 
             if (nodeIndex % 2 == 0) {
@@ -143,39 +140,38 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
     @return bytes32[] - the root of the merkle tree, after all the inserts.
     */
     function insertLeaves(bytes32[] memory leafValues) public returns (bytes32 root) {
-
-        uint numberOfLeaves = leafValues.length;
+        uint256 numberOfLeaves = leafValues.length;
 
         // check that space exists in the tree:
         require(treeWidth > leafCount, "There is no space left in the tree.");
         if (numberOfLeaves > treeWidth - leafCount) {
-            uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - leafCount);
+            uint256 numberOfExcessLeaves = numberOfLeaves - (treeWidth - leafCount);
             // remove the excess leaves, because we only want to emit those we've added as an event:
-            for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
+            for (uint256 xs = 0; xs < numberOfExcessLeaves; xs++) {
                 /*
                   CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
                   Credit: https://ethereum.stackexchange.com/a/51897/45916
                 */
 
                 assembly {
-                  mstore(leafValues, sub(mload(leafValues), 1))
+                    mstore(leafValues, sub(mload(leafValues), 1))
                 }
             }
             numberOfLeaves = treeWidth - leafCount;
         }
 
-        uint slot;
-        uint nodeIndex;
-        uint nodeValue;
+        uint256 slot;
+        uint256 nodeIndex;
+        uint256 nodeValue;
 
         // bytes32[2] memory input; // use this with ALT_BN128
-        uint[] memory input = new uint[](2); //input of the hash fuction
+        uint256[] memory input = new uint256[](2); //input of the hash fuction
 
-        uint[33] memory tempFrontier = frontier;
+        uint256[33] memory tempFrontier = frontier;
 
         // consider each new leaf in turn, from left to right:
-        for (uint leafIndex = leafCount; leafIndex < leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = uint(leafValues[leafIndex - leafCount]);
+        for (uint256 leafIndex = leafCount; leafIndex < leafCount + numberOfLeaves; leafIndex++) {
+            nodeValue = uint256(leafValues[leafIndex - leafCount]);
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
@@ -186,7 +182,7 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
             }
 
             // hash up to the level whose nodeValue we'll store in the frontier slot:
-            for (uint level = 1; level <= slot; level++) {
+            for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
                     input[0] = tempFrontier[level - 1]; //replace with push?
@@ -207,7 +203,7 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
         }
 
         // assign the new, final frontier values into storage:
-        for (uint level = 0; level < frontier.length; level++) {
+        for (uint256 level = 0; level < frontier.length; level++) {
             if (frontier[level] != tempFrontier[level]) {
                 frontier[level] = tempFrontier[level];
             }
@@ -215,24 +211,22 @@ contract MerkleTreeMiMC_BLS12 is MiMC_BLS12_377 {
         delete tempFrontier;
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint level = slot + 1; level <= treeHeight; level++) {
-
+        for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
                 input[0] = frontier[level - 1];
                 input[1] = nodeValue;
 
                 nodeValue = mimcHash(input); // the parentValue, but will become the nodeValue of the next level
-                nodeIndex = (nodeIndex - 1) / 2;  // the parentIndex, but will become the nodeIndex of the next level
+                nodeIndex = (nodeIndex - 1) / 2; // the parentIndex, but will become the nodeIndex of the next level
             } else {
                 // odd nodeIndex
                 input[0] = nodeValue;
                 input[1] = zero;
 
                 nodeValue = mimcHash(input); // the parentValue, but will become the nodeValue of the next level
-                nodeIndex = nodeIndex / 2;  // the parentIndex, but will become the nodeIndex of the next level
+                nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
             }
-
         }
 
         root = bytes32(nodeValue);

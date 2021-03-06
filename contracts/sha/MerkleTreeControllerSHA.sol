@@ -8,7 +8,6 @@ pragma solidity ^0.5.8;
 import "./MerkleTreeSHA.sol";
 
 contract MerkleTreeControllerSHA is MerkleTreeSHA {
-
     address public owner; // We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.
 
     mapping(bytes32 => bytes32) public roots; // Example of a way to hold every root that's been calculated by this contract. This isn't actually used by this simple example-contract.
@@ -36,7 +35,6 @@ contract MerkleTreeControllerSHA is MerkleTreeSHA {
     @param leafValue - the value of the leaf being inserted.
     */
     function _insertLeaf(bytes32 leafValue) external onlyOwner {
-
         bytes32 root = insertLeaf(leafValue); // recalculate the root of the tree
 
         // roots[root] = root;
@@ -49,7 +47,6 @@ contract MerkleTreeControllerSHA is MerkleTreeSHA {
     @param leafValues - the values of the leaves being inserted.
     */
     function _insertLeaves(bytes32[] calldata leafValues) external onlyOwner {
-
         bytes32 root = insertLeaves(leafValues); // recalculate the root of the tree
 
         // roots[root] = root;

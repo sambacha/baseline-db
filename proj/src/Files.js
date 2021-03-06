@@ -1,7 +1,7 @@
-const nodePath = require("path");
-const fs = require("fs");
+const nodePath = require('path');
+const fs = require('fs');
 
-const Utils = require("./Utils");
+const Utils = require('./Utils');
 
 /**
  * Returns true if the current working directory is inside
@@ -15,7 +15,7 @@ const inRepo = () => enkelgitPath() !== undefined;
  */
 const assertInRepo = () => {
   if (!inRepo()) {
-    throw new Error("not a Enkelgit repository");
+    throw new Error('not a Enkelgit repository');
   }
 };
 
@@ -34,11 +34,8 @@ const pathFromRepoRoot = (path) =>
  * @param {String} content
  */
 const write = (path, content) => {
-  const prefix = require("os").platform() == "win32" ? "." : "/";
-  writeFilesFromTree(
-    Utils.setIn({}, path.split(nodePath.sep).concat(content)),
-    prefix
-  );
+  const prefix = require('os').platform() == 'win32' ? '.' : '/';
+  writeFilesFromTree(Utils.setIn({}, path.split(nodePath.sep).concat(content)), prefix);
 };
 
 /**
@@ -56,7 +53,7 @@ const writeFilesFromTree = (tree, prefix) => {
       fs.writeFileSync(path, tree[name]);
     } else {
       if (!fs.existsSync(path)) {
-        fs.mkdirSync(path, "777");
+        fs.mkdirSync(path, '777');
       }
 
       writeFilesFromTree(tree[name], path);
@@ -87,7 +84,7 @@ const rmEmptyDirs = (path) => {
  */
 const read = (path) => {
   if (fs.existsSync(path)) {
-    return fs.readFileSync(path, "utf8");
+    return fs.readFileSync(path, 'utf8');
   }
 };
 
@@ -100,8 +97,8 @@ const read = (path) => {
 const enkelgitPath = (path) => {
   function enkelgitDir(dir) {
     if (fs.existsSync(dir)) {
-      const potentialConfigFile = nodePath.join(dir, "config");
-      const potentialEnkelgitPath = nodePath.join(dir, ".enkelgit");
+      const potentialConfigFile = nodePath.join(dir, 'config');
+      const potentialEnkelgitPath = nodePath.join(dir, '.enkelgit');
       if (
         fs.existsSync(potentialConfigFile) &&
         fs.statSync(potentialConfigFile).isFile() &&
@@ -110,15 +107,15 @@ const enkelgitPath = (path) => {
         return dir;
       } else if (fs.existsSync(potentialEnkelgitPath)) {
         return potentialEnkelgitPath;
-      } else if (dir !== "/") {
-        return enkelgitDir(nodePath.join(dir, ".."));
+      } else if (dir !== '/') {
+        return enkelgitDir(nodePath.join(dir, '..'));
       }
     }
   }
 
   const gDir = enkelgitDir(process.cwd());
   if (gDir !== undefined) {
-    return nodePath.join(gDir, path || "");
+    return nodePath.join(gDir, path || '');
   }
 };
 
@@ -128,8 +125,8 @@ const enkelgitPath = (path) => {
  *
  * @param {String} path
  */
-const workingCopyPath = (path = "") => {
-  return nodePath.join(nodePath.join(enkelgitPath(), ".."), path);
+const workingCopyPath = (path = '') => {
+  return nodePath.join(nodePath.join(enkelgitPath(), '..'), path);
 };
 
 /**
@@ -159,10 +156,7 @@ const lsRecursive = (path) => {
  */
 const nestFlatTree = (obj) => {
   return Object.keys(obj).reduce((tree, wholePath) => {
-    return Utils.setIn(
-      tree,
-      wholePath.split(nodePath.sep).concat(obj[wholePath])
-    );
+    return Utils.setIn(tree, wholePath.split(nodePath.sep).concat(obj[wholePath]));
   }, {});
 };
 
@@ -177,7 +171,7 @@ const nestFlatTree = (obj) => {
  */
 const flattenNestedTree = (tree, obj, prefix) => {
   if (obj === undefined) {
-    return flattenNestedTree(tree, {}, "");
+    return flattenNestedTree(tree, {}, '');
   }
 
   Object.keys(tree).forEach((dir) => {

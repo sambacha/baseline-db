@@ -1,14 +1,14 @@
-const Objects = require("./Objects");
-const Index = require("./Index");
-const Utils = require("./Utils");
-const Refs = require("./Refers");
+const Objects = require('./Objects');
+const Index = require('./Index');
+const Utils = require('./Utils');
+const Refs = require('./Refers');
 
 const FILE_STATUS = {
-  ADD: "A",
-  MODIFY: "M",
-  DELETE: "D",
-  SAME: "SAME",
-  CONFLICT: "CONFLICT",
+  ADD: 'A',
+  MODIFY: 'M',
+  DELETE: 'D',
+  SAME: 'SAME',
+  CONFLICT: 'CONFLICT',
 };
 
 /**
@@ -23,8 +23,7 @@ const FILE_STATUS = {
  */
 const diff = (hash1, hash2) => {
   const a = hash1 === undefined ? Index.toc() : Objects.commitToc(hash1);
-  const b =
-    hash2 === undefined ? Index.workingCopyToc() : Objects.commitToc(hash2);
+  const b = hash2 === undefined ? Index.workingCopyToc() : Objects.commitToc(hash2);
   return tocDiff(a, b);
 };
 
@@ -84,9 +83,7 @@ const tocDiff = (receiver, giver, base) => {
   base = base || receiver;
 
   // Get an array of all the paths in all the versions.
-  const paths = Object.keys(receiver)
-    .concat(Object.keys(base))
-    .concat(Object.keys(giver));
+  const paths = Object.keys(receiver).concat(Object.keys(base)).concat(Object.keys(giver));
 
   // Create and return diff.
   return Utils.unique(paths).reduce((idx, p) => {
@@ -111,10 +108,10 @@ const tocDiff = (receiver, giver, base) => {
  * @param {String} hash
  */
 const changedFilesCommitWouldOverwrite = (hash) => {
-  const headHash = Refs.hash("HEAD");
+  const headHash = Refs.hash('HEAD');
   return Utils.intersection(
     Object.keys(nameStatus(diff(headHash))),
-    Object.keys(nameStatus(diff(headHash, hash)))
+    Object.keys(nameStatus(diff(headHash, hash))),
   );
 };
 
@@ -123,7 +120,7 @@ const changedFilesCommitWouldOverwrite = (hash) => {
  * modified in the working copy since the last commit.
  */
 const addedOrModifiedFiles = () => {
-  const headToc = Refs.hash("HEAD") ? Objects.commitToc(Refs.hash("HEAD")) : {};
+  const headToc = Refs.hash('HEAD') ? Objects.commitToc(Refs.hash('HEAD')) : {};
   const wc = nameStatus(tocDiff(headToc, Index.workingCopyToc()));
   return Object.keys(wc).filter((p) => wc[p] !== FILE_STATUS.DELETE);
 };

@@ -1,18 +1,18 @@
-const WorkingCopy = require("./WorkingCopy");
-const Objects = require("./Objects");
-const Config = require("./Config");
-const Utils = require("./Utils");
-const Files = require("./Files");
-const Index = require("./Index");
-const Refs = require("./Refers");
-const Diff = require("./Diff");
+const WorkingCopy = require('./WorkingCopy');
+const Objects = require('./Objects');
+const Config = require('./Config');
+const Utils = require('./Utils');
+const Files = require('./Files');
+const Index = require('./Index');
+const Refs = require('./Refers');
+const Diff = require('./Diff');
 
 const FILE_STATUS = {
-  ADD: "A",
-  MODIFY: "M",
-  DELETE: "D",
-  SAME: "SAME",
-  CONFLICT: "CONFLICT",
+  ADD: 'A',
+  MODIFY: 'M',
+  DELETE: 'D',
+  SAME: 'SAME',
+  CONFLICT: 'CONFLICT',
 };
 
 /**
@@ -34,7 +34,7 @@ const commonAncestor = (aHash, bHash) => {
 /**
  * Returns true if the repository is in the middle of a merge.
  */
-const isMergeInProgress = () => Refs.hash("MERGE_HEAD");
+const isMergeInProgress = () => Refs.hash('MERGE_HEAD');
 
 /**
  * A fast forward is possible if the changes made to get to
@@ -48,9 +48,7 @@ const isMergeInProgress = () => Refs.hash("MERGE_HEAD");
  * @param {String} giverHash
  */
 const canFastForward = (receiverHash, giverHash) => {
-  return (
-    receiverHash === undefined || Objects.isAncestor(giverHash, receiverHash)
-  );
+  return receiverHash === undefined || Objects.isAncestor(giverHash, receiverHash);
 };
 
 /**
@@ -61,9 +59,7 @@ const canFastForward = (receiverHash, giverHash) => {
  * @param {String} giverHash
  */
 const isAForceFetch = (receiverHash, giverHash) => {
-  return (
-    receiverHash !== undefined && !Objects.isAncestor(giverHash, receiverHash)
-  );
+  return receiverHash !== undefined && !Objects.isAncestor(giverHash, receiverHash);
 };
 
 /**
@@ -75,11 +71,7 @@ const isAForceFetch = (receiverHash, giverHash) => {
  */
 const hasConflicts = (receiverHash, giverHash) => {
   const mrgDiff = mergeDiff(receiverHash, giverHash);
-  return (
-    Object.keys(mrgDiff).filter(
-      (p) => mrgDiff[p].status === FILE_STATUS.CONFLICT
-    ).length > 0
-  );
+  return Object.keys(mrgDiff).filter((p) => mrgDiff[p].status === FILE_STATUS.CONFLICT).length > 0;
 };
 
 /**
@@ -96,7 +88,7 @@ const mergeDiff = (receiverHash, giverHash) => {
   return Diff.tocDiff(
     Objects.commitToc(receiverHash),
     Objects.commitToc(giverHash),
-    Objects.commitToc(commonAncestor(receiverHash, giverHash))
+    Objects.commitToc(commonAncestor(receiverHash, giverHash)),
   );
 };
 
@@ -110,18 +102,16 @@ const mergeDiff = (receiverHash, giverHash) => {
  * @param {String} ref
  */
 const writeMergeMsg = (receiverHash, giverHash, ref) => {
-  const msg = "Merge " + ref + " into " + Refs.headBranchName();
+  const msg = 'Merge ' + ref + ' into ' + Refs.headBranchName();
 
   const mrgDiff = mergeDiff(receiverHash, giverHash);
-  const conflicts = Object.keys(mrgDiff).filter(
-    (p) => mrgDiff[p].status === FILE_STATUS.CONFLICT
-  );
+  const conflicts = Object.keys(mrgDiff).filter((p) => mrgDiff[p].status === FILE_STATUS.CONFLICT);
 
   if (conflicts.length > 0) {
-    msg += "\nConflicts:\n" + conflicts.join("\n");
+    msg += '\nConflicts:\n' + conflicts.join('\n');
   }
 
-  Files.write(Files.enkelgitPath("MERGE_MSG"), msg);
+  Files.write(Files.enkelgitPath('MERGE_MSG'), msg);
 };
 
 /**
@@ -142,14 +132,11 @@ const writeIndex = (receiverHash, giverHash) => {
         p,
         Objects.read(mrgDiff[p].receiver),
         Objects.read(mrgDiff[p].giver),
-        Objects.read(mrgDiff[p].base)
+        Objects.read(mrgDiff[p].base),
       );
     } else if (mrgDiff[p].status === FILE_STATUS.MODIFY) {
       Index.writeNonConflict(p, Objects.read(mrgDiff[p].giver));
-    } else if (
-      mrgDiff[p].status === FILE_STATUS.ADD ||
-      mrgDiff[p].status === FILE_STATUS.SAME
-    ) {
+    } else if (mrgDiff[p].status === FILE_STATUS.ADD || mrgDiff[p].status === FILE_STATUS.SAME) {
       const content = Objects.read(mrgDiff[p].receiver || mrgDiff[p].giver);
       Index.writeNonConflict(p, content);
     }
@@ -177,8 +164,7 @@ const writeFastForwardMerge = (receiverHash, giverHash) => {
     // commit to hashes of the files’ content. If recevierHash
     // is undefined, the repository has no commits, yet, and the
     // mapping object is empty.
-    var receiverToc =
-      receiverHash === undefined ? {} : Objects.commitToc(receiverHash);
+    var receiverToc = receiverHash === undefined ? {} : Objects.commitToc(receiverHash);
 
     // Write the content of the files to the working copy.
     WorkingCopy.write(Diff.tocDiff(receiverToc, Objects.commitToc(giverHash)));
@@ -201,7 +187,7 @@ const writeNonFastForwardMerge = (receiverHash, giverHash, giverRef) => {
   // Write giverHash to .enkelgit/MERGE_HEAD. This file
   // acts as a record of giverHash and as the signal
   // that the repository is in the merging state.
-  Refs.write("MERGE_HEAD", giverHash);
+  Refs.write('MERGE_HEAD', giverHash);
 
   // Write a standard merge commit message that will
   // be used when the merge commit is created.

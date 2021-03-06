@@ -8,7 +8,6 @@ The intention is for other 'derived' contracts to import this contract, and for 
 pragma solidity ^0.5.8;
 
 contract MerkleTreesSHA {
-
     /*
     @notice Explanation of the Merkle Tree in this contract:
     This is an append-only merkle tree; populated from left to right.
@@ -42,15 +41,15 @@ contract MerkleTreesSHA {
     /**
     These events are what the merkle-tree microservice's filters will listen for.
     */
-    event NewLeafA(uint leafIndex, bytes32 leafValue, bytes32 root);
-    event NewLeavesA(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
-    event NewLeafB(uint leafIndex, bytes32 leafValue, bytes32 root);
-    event NewLeavesB(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
+    event NewLeafA(uint256 leafIndex, bytes32 leafValue, bytes32 root);
+    event NewLeavesA(uint256 minLeafIndex, bytes32[] leafValues, bytes32 root);
+    event NewLeafB(uint256 leafIndex, bytes32 leafValue, bytes32 root);
+    event NewLeavesB(uint256 minLeafIndex, bytes32[] leafValues, bytes32 root);
 
     // event Output(bytes27 leftInput, bytes27 rightInput, bytes32 output, uint nodeIndex); // for debugging only
 
-    uint constant public treeHeight_a = 20;
-    uint constant public treeHeight_b = 22;
+    uint256 public constant treeHeight_a = 20;
+    uint256 public constant treeHeight_b = 22;
     uint256[2] public leafCount; // the number of leaves currently in the tree
 
     /**
@@ -69,14 +68,14 @@ contract MerkleTreesSHA {
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
     @return uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
     */
-    function getFrontierSlot(uint leafIndex) private pure returns (uint slot) {
+    function getFrontierSlot(uint256 leafIndex) private pure returns (uint256 slot) {
         slot = 0;
-        if ( leafIndex % 2 == 1 ) {
-            uint exp1 = 1;
-            uint pow1 = 2;
-            uint pow2 = pow1 << 1;
+        if (leafIndex % 2 == 1) {
+            uint256 exp1 = 1;
+            uint256 pow1 = 2;
+            uint256 pow2 = pow1 << 1;
             while (slot == 0) {
-                if ( (leafIndex + 1 - pow1) % pow2 == 0 ) {
+                if ((leafIndex + 1 - pow1) % pow2 == 0) {
                     slot = exp1;
                 } else {
                     pow1 = pow2;
@@ -92,27 +91,26 @@ contract MerkleTreesSHA {
     @param leafValue - the value of the leaf being inserted.
     @return bytes32 - the root of the merkle tree, after the insert.
     */
-    function insertLeaf(bytes32 leafValue, uint tree) public returns (bytes32 root) {
-
-      uint treeHeight = 0;
-      uint treeWidth = 0;
-      bytes27[32] memory frontier;
+    function insertLeaf(bytes32 leafValue, uint256 tree) public returns (bytes32 root) {
+        uint256 treeHeight = 0;
+        uint256 treeWidth = 0;
+        bytes27[32] memory frontier;
 
         if (tree == 0) {
-          treeHeight = treeHeight_a;
-          frontier = frontier_a;
+            treeHeight = treeHeight_a;
+            frontier = frontier_a;
         } else {
-          treeHeight = treeHeight_b;
-          frontier = frontier_b;
+            treeHeight = treeHeight_b;
+            frontier = frontier_b;
         }
 
-        treeWidth = 2 ** treeHeight; // 2 ** treeHeight
+        treeWidth = 2**treeHeight; // 2 ** treeHeight
 
         // check that space exists in the tree:
         require(treeWidth > leafCount[tree], "There is no space left in the tree.");
 
-        uint slot = getFrontierSlot(leafCount[tree]);
-        uint nodeIndex = leafCount[tree] + treeWidth - 1;
+        uint256 slot = getFrontierSlot(leafCount[tree]);
+        uint256 nodeIndex = leafCount[tree] + treeWidth - 1;
         bytes27 nodeValue = bytes27(leafValue << 40); // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
 
         bytes27 leftInput;
@@ -120,8 +118,7 @@ contract MerkleTreesSHA {
         bytes32[1] memory output; // output of the hash function
         bool success;
 
-        for (uint level = 0; level < treeHeight; level++) {
-
+        for (uint256 level = 0; level < treeHeight; level++) {
             if (level == slot) frontier[slot] = nodeValue;
 
             if (nodeIndex % 2 == 0) {
@@ -149,7 +146,10 @@ contract MerkleTreesSHA {
                     mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
                     success := staticcall(not(0), 2, input, 0x36, output, 0x20)
                     // Use "invalid" to make gas estimation work
-                    switch success case 0 { invalid() }
+                    switch success
+                        case 0 {
+                            invalid()
+                        }
                 }
 
                 nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
@@ -169,7 +169,10 @@ contract MerkleTreesSHA {
                     mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
                     success := staticcall(not(0), 2, input, 0x36, output, 0x20)
                     // Use "invalid" to make gas estimation work
-                    switch success case 0 { invalid() }
+                    switch success
+                        case 0 {
+                            invalid()
+                        }
                 }
 
                 nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
@@ -182,9 +185,9 @@ contract MerkleTreesSHA {
         root = nodeValue;
 
         if (tree == 0) {
-          emit NewLeafA(leafCount[tree], leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
+            emit NewLeafA(leafCount[tree], leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
         } else {
-          emit NewLeafB(leafCount[tree], leafValue, root);
+            emit NewLeafB(leafCount[tree], leafValue, root);
         }
 
         leafCount[tree]++; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
@@ -197,43 +200,41 @@ contract MerkleTreesSHA {
     @param leafValues - the values of the leaves being inserted.
     @return bytes32[] - the root of the merkle tree, after all the inserts.
     */
-    function insertLeaves(bytes32[] memory leafValues, uint tree) public returns (bytes32 root) {
+    function insertLeaves(bytes32[] memory leafValues, uint256 tree) public returns (bytes32 root) {
         // uint numberOfLeaves = leafValues.length;
 
         // uint treeHeight = 0;
-        uint treeWidth = 0;
+        uint256 treeWidth = 0;
         bytes27[32] memory frontier;
 
         if (tree == 0) {
-          // treeHeight = treeHeight_a;
-          treeWidth = 2 ** treeHeight_a; // 2 ** treeHeight
-          frontier = frontier_a;
+            // treeHeight = treeHeight_a;
+            treeWidth = 2**treeHeight_a; // 2 ** treeHeight
+            frontier = frontier_a;
         } else {
-          // treeHeight = treeHeight_b;
-          treeWidth = 2 ** treeHeight_b; // 2 ** treeHeight
-          frontier = frontier_b;
+            // treeHeight = treeHeight_b;
+            treeWidth = 2**treeHeight_b; // 2 ** treeHeight
+            frontier = frontier_b;
         }
-
-
 
         // check that space exists in the tree:
         require(treeWidth > leafCount[tree], "There is no space left in the tree.");
         if (leafValues.length > treeWidth - leafCount[tree]) {
             // remove the excess leaves, because we only want to emit those we've added as an event:
-            for (uint xs = 0; xs < leafValues.length - (treeWidth - leafCount[tree]); xs++) {
+            for (uint256 xs = 0; xs < leafValues.length - (treeWidth - leafCount[tree]); xs++) {
                 /**
                   CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
                   Credit: https://ethereum.stackexchange.com/a/51897/45916
                 */
                 assembly {
-                  mstore(leafValues, sub(mload(leafValues), 1))
+                    mstore(leafValues, sub(mload(leafValues), 1))
                 }
             }
             //leafValues.length = treeWidth - leafCount[tree];
         }
 
-        uint slot;
-        uint nodeIndex;
+        uint256 slot;
+        uint256 nodeIndex;
         bytes27 nodeValue;
 
         bytes27 leftInput;
@@ -244,7 +245,7 @@ contract MerkleTreesSHA {
         bytes27[32] memory tempFrontier = tree == 0 ? frontier_a : frontier_b;
 
         // consider each new leaf in turn, from left to right:
-        for (uint leafIndex = leafCount[tree]; leafIndex < leafCount[tree] + leafValues.length; leafIndex++) {
+        for (uint256 leafIndex = leafCount[tree]; leafIndex < leafCount[tree] + leafValues.length; leafIndex++) {
             nodeValue = bytes27(leafValues[leafIndex - leafCount[tree]] << 40);
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
@@ -256,7 +257,7 @@ contract MerkleTreesSHA {
             }
 
             // hash up to the level whose nodeValue we'll store in the frontier slot:
-            for (uint level = 1; level <= slot; level++) {
+            for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
                     leftInput = tempFrontier[level - 1];
@@ -270,7 +271,10 @@ contract MerkleTreesSHA {
                         mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
                         success := staticcall(not(0), 2, input, 0x36, output, 0x20)
                         // Use "invalid" to make gas estimation work
-                        switch success case 0 { invalid() }
+                        switch success
+                            case 0 {
+                                invalid()
+                            }
                     }
 
                     // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
@@ -289,7 +293,10 @@ contract MerkleTreesSHA {
                         mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
                         success := staticcall(not(0), 2, input, 0x36, output, 0x20)
                         // Use "invalid" to make gas estimation work
-                        switch success case 0 { invalid() }
+                        switch success
+                            case 0 {
+                                invalid()
+                            }
                     }
 
                     // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
@@ -302,7 +309,7 @@ contract MerkleTreesSHA {
         }
 
         // assign the new, final frontier values into storage:
-        for (uint level = 0; level < (frontier).length; level++) {
+        for (uint256 level = 0; level < (frontier).length; level++) {
             if (frontier[level] != tempFrontier[level]) {
                 frontier[level] = tempFrontier[level];
             }
@@ -310,8 +317,7 @@ contract MerkleTreesSHA {
         delete tempFrontier;
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint level = slot + 1; level <= (tree == 0 ? treeHeight_a : treeHeight_b); level++) {
-
+        for (uint256 level = slot + 1; level <= (tree == 0 ? treeHeight_a : treeHeight_b); level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
                 leftInput = frontier[level - 1];
@@ -324,13 +330,16 @@ contract MerkleTreesSHA {
                     mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
                     success := staticcall(not(0), 2, input, 0x36, output, 0x20)
                     // Use "invalid" to make gas estimation work
-                    switch success case 0 { invalid() }
+                    switch success
+                        case 0 {
+                            invalid()
+                        }
                 }
 
                 // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
 
                 nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
-                nodeIndex = (nodeIndex - 1) / 2;  // the parentIndex, but will become the nodeIndex of the next level
+                nodeIndex = (nodeIndex - 1) / 2; // the parentIndex, but will become the nodeIndex of the next level
             } else {
                 // odd nodeIndex
                 leftInput = nodeValue;
@@ -343,22 +352,25 @@ contract MerkleTreesSHA {
                     mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
                     success := staticcall(not(0), 2, input, 0x36, output, 0x20)
                     // Use "invalid" to make gas estimation work
-                    switch success case 0 { invalid() }
+                    switch success
+                        case 0 {
+                            invalid()
+                        }
                 }
 
                 // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
 
                 nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
-                nodeIndex = nodeIndex / 2;  // the parentIndex, but will become the nodeIndex of the next level
+                nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
             }
         }
 
         root = nodeValue;
 
         if (tree == 0) {
-          emit NewLeavesA(leafCount[tree], leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
+            emit NewLeavesA(leafCount[tree], leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
         } else {
-          emit NewLeavesB(leafCount[tree], leafValues, root);
+            emit NewLeavesB(leafCount[tree], leafValues, root);
         }
 
         leafCount[tree] += leafValues.length; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter

@@ -36,5 +36,3 @@ assembly {
     switch success case 0 { invalid() }
 }
 ```
-
-

@@ -1,10 +1,10 @@
-const nodePath = require("path");
-const fs = require("fs");
+const nodePath = require('path');
+const fs = require('fs');
 
-const Objects = require("./Objects");
-const Config = require("./Config");
-const Files = require("./Files");
-const Utils = require("./Utils");
+const Objects = require('./Objects');
+const Config = require('./Config');
+const Files = require('./Files');
+const Utils = require('./Utils');
 
 /**
  * Returns true if ref matches valid qualified ref syntax.
@@ -14,9 +14,9 @@ const Utils = require("./Utils");
 const isRef = (ref) => {
   return (
     ref !== undefined &&
-    (ref.match("^refs/heads/[A-Za-z-]+$") ||
-      ref.match("^refs/remotes/[A-Za-z-]+/[A-Za-z-]+$") ||
-      ["HEAD", "FETCH_HEAD", "MERGE_HEAD"].indexOf(ref) !== -1)
+    (ref.match('^refs/heads/[A-Za-z-]+$') ||
+      ref.match('^refs/remotes/[A-Za-z-]+/[A-Za-z-]+$') ||
+      ['HEAD', 'FETCH_HEAD', 'MERGE_HEAD'].indexOf(ref) !== -1)
   );
 };
 
@@ -26,11 +26,9 @@ const isRef = (ref) => {
  * @param {String} ref
  */
 const terminalRef = (ref) => {
-  if (ref === "HEAD" && !isHeadDetached()) {
+  if (ref === 'HEAD' && !isHeadDetached()) {
     // If ref is “HEAD” and head is pointing at a branch, return the branch.
-    return Files.read(Files.enkelgitPath("HEAD")).match(
-      "ref: (refs/heads/.+)"
-    )[1];
+    return Files.read(Files.enkelgitPath('HEAD')).match('ref: (refs/heads/.+)')[1];
   } else if (isRef(ref)) {
     // If ref is qualified, return it.
     return ref;
@@ -51,7 +49,7 @@ const hash = (refOrHash) => {
     return refOrHash;
   } else {
     const termRef = terminalRef(refOrHash);
-    if (termRef === "FETCH_HEAD") {
+    if (termRef === 'FETCH_HEAD') {
       return fetchHeadBranchToMerge(headBranchName());
     } else if (exists(termRef)) {
       return Files.read(Files.enkelgitPath(termRef));
@@ -62,8 +60,7 @@ const hash = (refOrHash) => {
 /**
  * Returns true if HEAD contains a commit hash, rather than the ref of a branch.
  */
-const isHeadDetached = () =>
-  Files.read(Files.enkelgitPath("HEAD")).match("refs") === null;
+const isHeadDetached = () => Files.read(Files.enkelgitPath('HEAD')).match('refs') === null;
 
 /**
  * Returns true if the repository is not bare and HEAD is pointing
@@ -71,15 +68,14 @@ const isHeadDetached = () =>
  *
  * @param {String} branch
  */
-const isCheckedOut = (branch) =>
-  !Config.isBare() && headBranchName() === branch;
+const isCheckedOut = (branch) => !Config.isBare() && headBranchName() === branch;
 
 /**
  * Converts the branch name name into a qualified local branch ref.
  *
  * @param {String} name
  */
-const toLocalRef = (name) => "refs/heads/" + name;
+const toLocalRef = (name) => 'refs/heads/' + name;
 
 /**
  * Converts remote and branch name name into a qualified remote branch ref.
@@ -87,7 +83,7 @@ const toLocalRef = (name) => "refs/heads/" + name;
  * @param {String} remote
  * @param {String} name
  */
-const toRemoteRef = (remote, name) => "refs/remotes/" + remote + "/" + name;
+const toRemoteRef = (remote, name) => 'refs/remotes/' + remote + '/' + name;
 
 /**
  * Sets the content of the file for the qualified ref ref to content.
@@ -119,9 +115,9 @@ const rm = (ref) => {
  * @param {String} branchName
  */
 const fetchHeadBranchToMerge = (branchName) => {
-  return Utils.lines(Files.read(Files.enkelgitPath("FETCH_HEAD")))
-    .filter((l) => l.match("^.+ branch " + branchName + " of"))
-    .map((l) => l.match("^([^ ]+) ")[1])[0];
+  return Utils.lines(Files.read(Files.enkelgitPath('FETCH_HEAD')))
+    .filter((l) => l.match('^.+ branch ' + branchName + ' of'))
+    .map((l) => l.match('^([^ ]+) ')[1])[0];
 };
 
 /**
@@ -130,7 +126,7 @@ const fetchHeadBranchToMerge = (branchName) => {
  */
 const localHeads = () => {
   return fs
-    .readdirSync(nodePath.join(Files.enkelgitPath(), "refs", "heads"))
+    .readdirSync(nodePath.join(Files.enkelgitPath(), 'refs', 'heads'))
     .reduce((o, n) => Utils.setIn(o, [n, hash(n)]), {});
 };
 
@@ -146,7 +142,7 @@ const exists = (ref) => isRef(ref) && fs.existsSync(Files.enkelgitPath(ref));
  */
 const headBranchName = () => {
   if (!isHeadDetached()) {
-    return Files.read(Files.enkelgitPath("HEAD")).match("refs/heads/(.+)")[1];
+    return Files.read(Files.enkelgitPath('HEAD')).match('refs/heads/(.+)')[1];
   }
 };
 
@@ -155,12 +151,12 @@ const headBranchName = () => {
  * of the next commit.
  */
 const commitParentHashes = () => {
-  const headHash = hash("HEAD");
-  if (hash("MERGE_HEAD")) {
+  const headHash = hash('HEAD');
+  if (hash('MERGE_HEAD')) {
     // TODO!!!
     // If the repository is in the middle of a merge,
     // return the hashes of the two commits being merged.
-    return [headHash, hash("MERGE_HEAD")];
+    return [headHash, hash('MERGE_HEAD')];
   } else if (headHash === undefined) {
     // If this repository has no commits, return an empty array.
     return [];
