@@ -1,49 +1,67 @@
 /**
-@module index.js
-@desc
-@author iAmMichaelConnor
-*/
+ * @module index.js
+ * @author iAmMichaelConnor
+ * @desc index.js gives api endpoints to access the functions of the merkle-tree microservice */
 
-import config from 'config';
+import express, { Router } from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import logger from './logger';
+import Web3 from './web3';
+import autostart from './auto-start';
 
-import app from './app';
-import deployer from './deployer';
-import utilsWeb3 from './utils-web3';
-import merkleTree from './rest/merkle-tree';
+import {
+  assignDbConnection,
+  formatResponse,
+  formatError,
+  errorHandler,
+  logError,
+} from './middleware';
 
-const main = async () => {
-  try {
-    const { contractNames } = config;
+import { leafRoutes, nodeRoutes, metadataRoutes, merkleTreeRoutes } from './routes';
 
-    await contractNames.forEach(async (contractName) => {
-      switch (config.PUSH_OR_PULL) {
-        default:
-          // 'pull': deploy the contract, and then wait for GET requests to 'pull' the contract information from the merkle-tree microservice.
-          await deployer.deploy(contractName);
-          break;
+Web3.connect();
+const app = express();
 
-        case 'push': {
-          // 'push': deploy the contract and POST (push) the contract information to the merkle-tree microservice:
-          const contractInstance = await deployer.deploy(contractName);
-
-          const contractAddress = contractInstance._address; // eslint-disable-line no-underscore-dangle
-
-          const contractInterface = utilsWeb3.getContractInterface(contractName);
-
-          await merkleTree.postContractInterface(contractName, JSON.stringify(contractInterface));
-          await merkleTree.postContractAddress(contractName, contractAddress);
-          break;
-        }
-      }
-    });
-
-    app.listen(80, '0.0.0.0', () => {
-      console.log(`\ndeployer RESTful API server started on ::: 80`);
-    });
-  } catch (err) {
-    console.error(err);
-    process.exit(1);
+// TODO: what is this? :
+app.use(function cros(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+  );
+  if (req.method === 'OPTIONS') {
+    res.end();
+  } else {
+    next();
   }
-};
+});
 
-main();
+// cors & body parser middleware should come before any routes are handled
+app.use(cors());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+app.use(assignDbConnection);
+
+// Routes
+const router = Router();
+app.use(router);
+
+leafRoutes(router);
+nodeRoutes(router);
+metadataRoutes(router);
+merkleTreeRoutes(router);
+
+// Response
+app.use(formatResponse);
+app.use(formatError);
+app.use(errorHandler);
+app.use(logError);
+
+const server = app.listen(80, '0.0.0.0', () => {
+  logger.info('merkle-tree RESTful API server started on ::: 80');
+  if (process.env.AUTOSTART) autostart();
+});
+server.timeout = 0;

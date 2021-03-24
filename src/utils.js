@@ -5,9 +5,13 @@
 */
 import config from 'config';
 import createKeccakHash from 'keccak';
+import BI from 'big-integer';
+import logger from './logger';
 
 const crypto = require('crypto');
 const { Buffer } = require('safe-buffer');
+
+// BW6 not yet implemented
 
 const mimcCurves = {
   BLS12_377: {
@@ -15,7 +19,7 @@ const mimcCurves = {
     rounds: 74,
     modulus: BigInt('8444461749428370424248824938781546531375899335154063827935233455917409239041'),
   },
-  ALT_BN128: {
+  ALT_BN_254: {
     exponent: 7,
     rounds: 91,
     modulus: BigInt(
@@ -30,6 +34,94 @@ const mimcCurves = {
     ),
   },
 };
+
+/** Helper function for the converting any base to any base
+ */
+function convertBase(str, fromBase, toBase) {
+  const digits = parseToDigitsArray(str, fromBase);
+  if (digits === null) return null;
+
+  let outArray = [];
+  let power = [1];
+  for (let i = 0; i < digits.length; i += 1) {
+    // invariant: at this point, fromBase^i = power
+    if (digits[i]) {
+      outArray = add(outArray, multiplyByNumber(digits[i], power, toBase), toBase);
+    }
+    power = multiplyByNumber(fromBase, power, toBase);
+  }
+
+  let out = '';
+  for (let i = outArray.length - 1; i >= 0; i -= 1) {
+    out += outArray[i].toString(toBase);
+  }
+  // if the original input was equivalent to zero, then 'out' will still be empty ''. Let's check for zero.
+  if (out === '') {
+    let sum = 0;
+    for (let i = 0; i < digits.length; i += 1) {
+      sum += digits[i];
+    }
+    if (sum === 0) out = '0';
+  }
+
+  return out;
+}
+
+function parseToDigitsArray(str, base) {
+  const digits = str.split('');
+  const ary = [];
+  for (let i = digits.length - 1; i >= 0; i -= 1) {
+    const n = parseInt(digits[i], base);
+    if (Number.isNaN(n)) return null;
+    ary.push(n);
+  }
+  return ary;
+}
+
+function add(x, y, base) {
+  const z = [];
+  const n = Math.max(x.length, y.length);
+  let carry = 0;
+  let i = 0;
+  while (i < n || carry) {
+    const xi = i < x.length ? x[i] : 0;
+    const yi = i < y.length ? y[i] : 0;
+    const zi = carry + xi + yi;
+    z.push(zi % base);
+    carry = Math.floor(zi / base);
+    i += 1;
+  }
+  return z;
+}
+
+/** Helper function for the converting any base to any base
+ Returns a*x, where x is an array of decimal digits and a is an ordinary
+ JavaScript number. base is the number base of the array x.
+ */
+function multiplyByNumber(num, x, base) {
+  if (num < 0) return null;
+  if (num === 0) return [];
+
+  let result = [];
+  let power = x;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    // eslint-disable-next-line no-bitwise
+    if (num & 1) {
+      result = add(result, power, base);
+    }
+    num >>= 1; // eslint-disable-line
+    if (num === 0) break;
+    power = add(power, power, base);
+  }
+  return result;
+}
+
+// Converts integer value strings to hex values
+function decToHex(decStr) {
+  const hex = ensure0x(convertBase(decStr, 10, 16));
+  return hex;
+}
 
 /**
 utility function to remove a leading 0x on a string representing a hex number.
@@ -54,6 +146,16 @@ function ensure0x(hex = '') {
     return `0x${hexString}`;
   }
   return hexString;
+}
+
+/**
+utility function to check that a string is hexadecimal
+*/
+function isHex(value) {
+  if (typeof value !== 'string') return false;
+  if (value.indexOf('0x') !== 0) return false;
+  const regexp = /^[0-9a-fA-F]+$/;
+  return regexp.test(strip0x(value));
 }
 
 /**
@@ -138,7 +240,7 @@ function mimcpe(x, k, seed, roundCount, exponent, m) {
   for (let i = 0; i < roundCount; i++) {
     c = keccak256Hash(c);
     t = addMod([xx, BigInt(c), k], m); // t = x + c_i + k
-    xx = powerMod(t, BigInt(7), m); // t^7
+    xx = powerMod(t, BigInt(exponent), m); // t^7
   }
   // Result adds key again as blinding factor
   return addMod([xx, k], m);
@@ -154,15 +256,13 @@ function mimcpemp(x, k, seed, roundCount, exponent, m) {
 }
 
 function mimcHash(...msgs) {
-  const { rounds, exponent, modulus } = !config.CURVE ? mimcCurves[2] : mimcCurves[config.CURVE];
-  console.log(`dep curve: ${config.CURVE} rounds: ${rounds} exp ${exponent} mod ${modulus}`);
+  const { rounds, exponent, modulus } = !config.CURVE
+    ? mimcCurves.ALT_BN_254
+    : mimcCurves[config.CURVE];
+  logger.silly(`curve: ${config.CURVE} rounds: ${rounds} exp ${exponent} mod ${modulus}`);
   const mimc = '0x6d696d63'; // this is 'mimc' in hex as a nothing-up-my-sleeve seed
   return `0x${mimcpemp(
-    msgs.map((e) => {
-      const f = BigInt(e);
-      // if (f > config.ZOKRATES_PRIME) throw new Error('MiMC input exceeded prime field size');
-      return f;
-    }),
+    msgs.map(BigInt),
     BigInt(0), // k
     keccak256Hash(mimc), // seed
     rounds, // rounds of hashing
@@ -193,8 +293,13 @@ function concatenateThenHash(...items) {
 }
 
 export default {
+  convertBase,
+  decToHex,
   ensure0x,
   strip0x,
+  isHex,
   concatenate,
+  mimcHash,
+  shaHash,
   concatenateThenHash,
 };

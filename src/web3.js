@@ -6,28 +6,32 @@
 
 import Web3 from 'web3';
 import config from 'config';
+import logger from './logger';
 
 export default {
   connection() {
     return this.web3;
   },
-
+  buildUrl() {
+    if (config.web3.rpcUrl) return config.web3.rpcUrl;
+    return `${config.web3.host}:${config.web3.port}`;
+  },
   /**
    * Connects to web3 and then sets proper handlers for events
    */
   connect() {
     if (this.web3) return this.web3;
 
-    console.log('\nBlockchain Connecting ...');
+    logger.info('Blockchain Connecting ...');
     const provider = new Web3.providers.WebsocketProvider(
-      `${config.web3.host}:${config.web3.port}`,
+      this.buildUrl(),
       null,
       config.web3.options,
     );
 
-    provider.on('error', console.error);
-    provider.on('connect', () => console.log('\nBlockchain Connected ...'));
-    provider.on('end', console.error);
+    provider.on('error', (err) => logger.error(err));
+    provider.on('connect', () => logger.info('Blockchain Connected ...'));
+    provider.on('end', () => logger.error('Blockchain Disconnected'));
 
     this.web3 = new Web3(provider);
 
