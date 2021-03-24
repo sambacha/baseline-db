@@ -30,7 +30,7 @@
     "solc": "0.5.8",
     "fs-extra": "^8.1.0",
     "hex-to-binary": "^1.0.1",
-    "keccak": "^2.1.0",
+    "keccak": "^3.0.0",
     "jsonfile": "^5.0.0"
   },
   "devDependencies": {
