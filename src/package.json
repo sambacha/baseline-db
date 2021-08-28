@@ -28,7 +28,7 @@
     "winston-daily-rotate-file": "^3.4.1",
     "safe-buffer": "^5.1.2",
     "solc": "0.5.8",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^10.0.0",
     "hex-to-binary": "^1.0.1",
     "keccak": "^3.0.0",
     "jsonfile": "^5.0.0"
